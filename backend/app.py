@@ -28,6 +28,7 @@ from fastapi.staticfiles import StaticFiles
 from backend import config
 from backend.data import facilities as facilities_data
 from backend.data import warehouse
+from backend.engine import ranking
 
 DIST = APP_ROOT / "frontend" / "dist"
 
@@ -83,6 +84,36 @@ def api_facilities(
             status_code=503,
         )
     return JSONResponse({"care_need": care_need, "count": len(cands), "candidates": cands})
+
+
+@app.get("/api/shortlist")
+def api_shortlist(
+    care_need: str = Query(..., description="care-need key, e.g. icu / nicu"),
+    lat: float | None = Query(None),
+    lon: float | None = Query(None),
+    limit: int = Query(400, ge=1, le=2000),
+    top: int = Query(25, ge=1, le=200, description="max ranked results to return"),
+) -> JSONResponse:
+    """Evidence-attached, ranked shortlist for a care-need near (lat, lon).
+
+    Each result carries: evidence status band + exact-span citations + source_urls,
+    data-desert/medical-desert classification, and a call-before-travel checklist.
+    """
+    cfg = config.care_need_config(care_need)
+    if not cfg:
+        return JSONResponse({"error": f"unknown care_need '{care_need}'"}, status_code=400)
+    try:
+        cands = facilities_data.find_candidates(care_need, lat, lon, limit=limit)
+    except Exception as e:
+        return JSONResponse(
+            {"error": "data unavailable", "detail": str(e), "warehouse_available": warehouse.available()},
+            status_code=503,
+        )
+    shortlist = ranking.build_shortlist(cands, care_need)
+    shortlist["results"] = shortlist["results"][:top]
+    shortlist["care_need_label"] = cfg["label"]
+    shortlist["is_emergency"] = bool(cfg.get("emergency"))
+    return JSONResponse(shortlist)
 
 
 # ---------------------------------------------------------------------------
