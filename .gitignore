@@ -1,0 +1,23 @@
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/node_modules/
+*.local
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Databricks CLI state
+.databricks/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
