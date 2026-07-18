@@ -1,9 +1,7 @@
 # Databricks Apps entrypoint.
 # Single process: FastAPI serves /api/* AND the prebuilt React PWA (frontend/dist).
+# Use `sh -c` so the shell substitutes ${DATABRICKS_APP_PORT} (matches the working pattern).
 command:
-  - uvicorn
-  - backend.app:app
-  - --host
-  - "0.0.0.0"
-  - --port
-  - "${DATABRICKS_APP_PORT}"
+  - sh
+  - -c
+  - uvicorn backend.app:app --host 0.0.0.0 --port ${DATABRICKS_APP_PORT:-8000}
