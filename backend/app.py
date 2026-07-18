@@ -21,14 +21,16 @@ try:  # pragma: no cover
 except Exception:  # pragma: no cover
     pass
 
-from fastapi import FastAPI, Query
+from fastapi import Body, FastAPI, Query
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend import config
+from backend.ai import care_need as ai_care_need
 from backend.data import facilities as facilities_data
 from backend.data import warehouse
 from backend.engine import ranking
+from backend.persistence import store
 
 DIST = APP_ROOT / "frontend" / "dist"
 
@@ -114,6 +116,57 @@ def api_shortlist(
     shortlist["care_need_label"] = cfg["label"]
     shortlist["is_emergency"] = bool(cfg.get("emergency"))
     return JSONResponse(shortlist)
+
+
+@app.post("/api/map-symptom")
+def api_map_symptom(payload: dict = Body(...)) -> JSONResponse:
+    """Map a free-text symptom description to a suggested care-need. NEVER a diagnosis.
+
+    The user always confirms the suggestion via the care-need buttons before a search runs.
+    """
+    text = (payload or {}).get("text", "")
+    locale = (payload or {}).get("locale", "en")
+    if not isinstance(text, str) or not text.strip():
+        return JSONResponse({"error": "empty text"}, status_code=400)
+    result = ai_care_need.map_symptom_to_care_need(text.strip(), locale)
+    return JSONResponse(result)
+
+
+# ---------------------------------------------------------------------------
+# Persistence — saved facilities (survives restart via Delta)
+# ---------------------------------------------------------------------------
+@app.get("/api/saved")
+def api_saved_list() -> JSONResponse:
+    try:
+        return JSONResponse({"items": store.list_saved()})
+    except Exception as e:
+        return JSONResponse({"items": [], "error": "store unavailable", "detail": str(e)}, status_code=503)
+
+
+@app.post("/api/saved")
+def api_saved_create(payload: dict = Body(...)) -> JSONResponse:
+    facility = (payload or {}).get("facility")
+    if not isinstance(facility, dict) or not facility.get("unique_id"):
+        return JSONResponse({"error": "facility with unique_id required"}, status_code=400)
+    try:
+        res = store.save(
+            care_need=(payload.get("care_need") or ""),
+            care_need_label=payload.get("care_need_label"),
+            facility=facility,
+            note=payload.get("note"),
+        )
+        return JSONResponse(res, status_code=201)
+    except Exception as e:
+        return JSONResponse({"error": "store unavailable", "detail": str(e)}, status_code=503)
+
+
+@app.delete("/api/saved/{saved_id}")
+def api_saved_delete(saved_id: str) -> JSONResponse:
+    try:
+        store.delete(saved_id)
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=503)
 
 
 # ---------------------------------------------------------------------------

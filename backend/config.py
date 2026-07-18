@@ -28,6 +28,16 @@ def facilities_fqn() -> str:
     return f"{CATALOG}.{SCHEMA}.{FACILITIES_TABLE}"
 
 
+# --- Persistence store (writable Delta table; survives app restart) ---
+STORE_CATALOG = _env("MEDSATYA_STORE_CATALOG", "workspace")
+STORE_SCHEMA = _env("MEDSATYA_STORE_SCHEMA", "medsatya")
+STORE_TABLE = _env("MEDSATYA_STORE_TABLE", "saved")
+
+
+def store_fqn() -> str:
+    return f"`{STORE_CATALOG}`.`{STORE_SCHEMA}`.`{STORE_TABLE}`"
+
+
 # --- Coordinate validation: India bounding box (drives location_confidence) ---
 INDIA_LAT = (6.0, 38.0)
 INDIA_LON = (68.0, 98.0)
