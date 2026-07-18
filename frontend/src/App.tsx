@@ -1,8 +1,34 @@
 import { useEffect, useState } from "react";
+import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
+import FindCare from "@/features/FindCare";
+import FacilityPassport from "@/features/FacilityPassport";
+import Saved from "@/features/Saved";
+import OfflineBanner from "@/components/OfflineBanner";
 
 type Health = { status: string; app: string; version: string; frontend_built: boolean };
 
-export default function App() {
+function Header() {
+  return (
+    <header className="border-b border-navy/10 bg-white/80 backdrop-blur">
+      <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
+        <Link to="/" className="flex flex-col leading-tight">
+          <span className="text-lg font-extrabold tracking-tight text-navy">MedSatya</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-satya">
+            Trust. Verify. Heal India.
+          </span>
+        </Link>
+        <Link
+          to="/saved"
+          className="min-h-[40px] rounded-xl border border-navy/15 px-3 py-2 text-sm font-semibold text-navy hover:bg-navy/5"
+        >
+          Saved
+        </Link>
+      </div>
+    </header>
+  );
+}
+
+function Footer() {
   const [health, setHealth] = useState<Health | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -14,36 +40,35 @@ export default function App() {
   }, []);
 
   return (
-    <main className="min-h-full flex flex-col items-center justify-center px-6 py-16 text-center">
-      <div className="max-w-xl">
-        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-navy text-warm shadow-lg">
-          <span className="text-2xl font-bold text-gold">✓</span>
-        </div>
-        <h1 className="text-4xl font-bold tracking-tight text-navy">MedSatya</h1>
-        <p className="mt-2 text-lg font-medium text-satya">Trust. Verify. Heal India.</p>
-        <p className="mt-6 text-navy/70">
-          A Referral Copilot that helps you find trustworthy care. Every claim shows its source —
-          we distinguish <strong>“we don’t know”</strong> from <strong>“care is missing”</strong>,
-          and we never invent facts about beds, operation, or quality.
-        </p>
+    <footer className="mx-auto max-w-2xl px-4 py-6 text-center text-xs text-navy/40">
+      {health && (
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block h-2 w-2 rounded-full bg-satya" aria-hidden="true" />
+          API {health.status} · v{health.version}
+        </span>
+      )}
+      {err && <span className="text-evidence-contradictory">API unreachable</span>}
+      {!health && !err && <span>Checking API…</span>}
+      <p className="mt-1">MedSatya does not diagnose. It scores the evidence for care availability.</p>
+    </footer>
+  );
+}
 
-        <div className="mt-10 rounded-xl border border-navy/10 bg-white p-4 text-left text-sm">
-          <div className="font-semibold text-navy">Deploy pipeline</div>
-          {health && (
-            <div className="mt-2 flex items-center gap-2 text-satya">
-              <span className="inline-block h-2.5 w-2.5 rounded-full bg-satya" />
-              API <code>{health.status}</code> · v{health.version} · frontend{" "}
-              {health.frontend_built ? "built" : "dev"}
-            </div>
-          )}
-          {err && <div className="mt-2 text-evidence-contradictory">API unreachable: {err}</div>}
-          {!health && !err && <div className="mt-2 text-navy/50">checking…</div>}
-        </div>
-
-        <p className="mt-8 text-xs text-navy/40">
-          Hack-Nation × Databricks · Challenge&nbsp;#04 “Data Legend” · MVP skeleton
-        </p>
+export default function App() {
+  return (
+    <BrowserRouter>
+      <div className="flex min-h-full flex-col bg-warm">
+        <OfflineBanner />
+        <Header />
+        <main className="flex-1">
+          <Routes>
+            <Route path="/" element={<FindCare />} />
+            <Route path="/facility/:id" element={<FacilityPassport />} />
+            <Route path="/saved" element={<Saved />} />
+          </Routes>
+        </main>
+        <Footer />
       </div>
-    </main>
+    </BrowserRouter>
   );
 }

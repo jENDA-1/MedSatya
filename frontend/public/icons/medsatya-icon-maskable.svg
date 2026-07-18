@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Full-bleed navy background (no rounded corners) for maskable + apple-touch safe masking -->
+  <rect width="512" height="512" fill="#071B4F"/>
+  <!-- Shield kept within the maskable safe zone (~central 80%) -->
+  <g transform="translate(256 262) scale(0.74) translate(-256 -256)">
+    <path d="M256 96 L392 148 V268 C392 350 330 402 256 430 C182 402 120 350 120 268 V148 Z"
+          fill="#00634B" stroke="#C99A2E" stroke-width="14" stroke-linejoin="round"/>
+    <path d="M196 262 L242 308 L330 210" fill="none" stroke="#F5F3ED" stroke-width="30"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
