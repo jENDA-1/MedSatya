@@ -1,10 +1,31 @@
-# MedSatya — Referral Copilot
+<div align="center">
 
-**Trust. Verify. Heal India.**
+# 🩺 MedSatya — Referral Copilot
 
-<video src="https://github.com/jENDA-1/MedSatya/raw/main/docs/demo.mp4" controls width="320"></video>
+### _Trust. Verify. Heal India._
+
+[![Hack-Nation × Databricks](https://img.shields.io/badge/Hack--Nation%20%C3%97%20Databricks-Challenge%20%2304%20%C2%B7%20Data%20Legend-FF3621?style=for-the-badge&logo=databricks&logoColor=white)](https://www.databricks.com/)
+[![Hackathon 18–19 Jul 2026](https://img.shields.io/badge/Hackathon-18%E2%80%9319%20Jul%202026-6f42c1?style=for-the-badge)](#-hackathon--track)
+[![Team AHOJ AI](https://img.shields.io/badge/Team-AHOJ%20AI-0ea5e9?style=for-the-badge)](#-team--ahoj-ai)
+
+[![Live on Databricks Apps](https://img.shields.io/badge/▶%20Live-Databricks%20Apps-FF3621?style=for-the-badge&logo=databricks&logoColor=white)](https://medsatya-7474659229844250.aws.databricksapps.com)
+[![Public demo — no login](https://img.shields.io/badge/▶%20Public%20demo-no%20login-2ea44f?style=for-the-badge)](https://gridmind.taila69b70.ts.net/medsatyam/)
+
+![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-06B6D4?logo=tailwindcss&logoColor=white)
+![MapLibre](https://img.shields.io/badge/MapLibre-396CB2?logo=maplibre&logoColor=white)
+![PWA](https://img.shields.io/badge/PWA-5A0FC8?logo=pwa&logoColor=white)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow)
+
+<video src="https://github.com/jENDA-1/MedSatya/raw/main/docs/demo.mp4" controls width="360"></video>
 
 ▶ [Watch the brand animation](docs/demo.mp4) (6 s)
+
+</div>
 
 MedSatya helps people in India find **trustworthy care**. For a given care need (ICU, NICU, …) near a
 location, it returns an **evidence-attached shortlist** of facilities — every claim shows its **source**
@@ -14,40 +35,84 @@ It **never** invents facts about bed availability, current operation, patient ad
 quality, and it **does not diagnose**. The core rule: we don't score "hospital trustworthiness", we score the
 **strength of evidence that a specific facility provides a specific type of care**.
 
-Built for **Hack-Nation × Databricks, Challenge #04 "Data Legend"**. Runs live on **Databricks Apps**
-(FastAPI backend serving a prebuilt React PWA — one process).
+---
+
+## 🏆 Hackathon & track
+
+Built at the **Hack-Nation × Databricks Hackathon** on **18–19 July 2026**, for **Challenge #04 — "Data Legend"**.
+
+The track hands you **~10,000 Indian hospital records** (the **Virtue Foundation** dataset) full of
+**self-reported, unverified claims** and asks for an app a health planner can *trust and act on* — one that
+always shows **where each fact comes from** ("receipts") and **what it doesn't know**, never confusing a
+**medical desert** (care truly absent) with a **data desert** (we just lack data).
+
+The brief offers four app variants; **we primarily built the Referral Copilot** (variant 3 —
+_"Where should I send the patient?"_): enter a **location + care need** (e.g. _ICU near Patna_) → a short,
+**evidence-backed shortlist** showing distance, what supports each claim, and what's still missing — so a
+family or planner knows not just *where*, but *how sure we are*.
+
+## 🔗 Live
+
+| Deployment | URL | Access |
+|---|---|---|
+| 🟠 **Databricks Apps** — canonical; one FastAPI process serves `/api/*` + the React PWA | **https://medsatya-7474659229844250.aws.databricksapps.com** | Databricks workspace SSO |
+| 🟢 **Public demo** — for reviewers; static frontend + FastAPI reverse-proxied under a subpath | **https://gridmind.taila69b70.ts.net/medsatyam/** | open, no login |
+
+Both run on the **same live Databricks warehouse** — the public demo is a mirror so reviewers can try it
+without a Databricks login. See [Deploy → Public demo mirror](#public-demo-mirror) for the subpath build.
+
+## 👥 Team — AHOJ AI
+
+<table>
+<tr>
+<td align="center" width="25%">
+<a href="https://www.linkedin.com/in/jan-ullmann-5a167920b/"><img src="docs/team/jan-ullmann.jpg" width="110" alt="Jan Ullmann"/></a><br/>
+<b>Jan Ullmann</b><br/>
+<sub>Team lead · full-stack + data/AI</sub><br/>
+<a href="https://www.linkedin.com/in/jan-ullmann-5a167920b/"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?logo=linkedin&logoColor=white" alt="LinkedIn"/></a>
+</td>
+<td align="center" width="25%">
+<a href="https://www.linkedin.com/in/kalaluka-kwalombota-0211961ab/"><img src="docs/team/kalaluka-kwalombota.jpg" width="110" alt="Kalaluka Kwalombota"/></a><br/>
+<b>Kalaluka Kwalombota</b><br/>
+<sub>Data &amp; ML engineering</sub><br/>
+<a href="https://www.linkedin.com/in/kalaluka-kwalombota-0211961ab/"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?logo=linkedin&logoColor=white" alt="LinkedIn"/></a>
+</td>
+<td align="center" width="25%">
+<a href="https://www.linkedin.com/in/jirizavorka/"><img src="docs/team/jiri-zavorka.jpg" width="110" alt="Jiří Závorka"/></a><br/>
+<b>Jiří Závorka</b><br/>
+<sub>Software / data engineering</sub><br/>
+<a href="https://www.linkedin.com/in/jirizavorka/"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?logo=linkedin&logoColor=white" alt="LinkedIn"/></a>
+</td>
+<td align="center" width="25%">
+<a href="https://www.linkedin.com/in/radek-skoda-bb2a394/"><img src="docs/team/radek-skoda.jpg" width="110" alt="Radek Škoda"/></a><br/>
+<b>prof. Radek Škoda</b><br/>
+<sub>Academic advisor / mentor</sub><br/>
+<a href="https://www.linkedin.com/in/radek-skoda-bb2a394/"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?logo=linkedin&logoColor=white" alt="LinkedIn"/></a>
+</td>
+</tr>
+</table>
+
+A European team from three Czech universities: **TU Liberec** · **CTU Prague (CIIRC)** · **University of West Bohemia (FEE)**.
 
 ---
 
-## Live deployments
-
-MedSatya runs **live on two targets, both querying the same live Databricks warehouse**:
-
-| Target | URL | Access |
-|---|---|---|
-| **Databricks Apps** — canonical; one FastAPI process serves `/api/*` + the React PWA | https://medsatya-7474659229844250.aws.databricksapps.com | Databricks workspace SSO |
-| **Public demo** — for reviewers; static frontend + FastAPI reverse-proxied under a subpath | https://gridmind.taila69b70.ts.net/medsatyam/ | open, no login |
-
-Same Trust Engine, same live data — the public demo is a mirror so reviewers can try it without a Databricks
-login. See [Deploy → Public demo mirror](#public-demo-mirror) for how the subpath build works.
-
-## Architecture
+## 🧭 Architecture
 
 ```
 FastAPI (backend/)  ── serves ──►  /api/*   (data + engine + AI)
         │                          /*        (prebuilt React PWA from frontend/dist)
         ▼
-  SQL Warehouse  (databricks-sql-connector + service-principal OAuth)
+  SQL Warehouse  (Databricks SDK Statement Execution API + service-principal OAuth / PAT)
         ▼
   facilities  (Virtue Foundation dataset, via Delta Sharing / Marketplace)
 ```
 
 - **backend/** — Python. `config.py` (parametrized catalog/schema/table + warehouse), `data/` (SQL warehouse +
   facilities parsing), `engine/` (deterministic Trust Engine: evidence bands, ranking, desert), `ai/`
-  (symptom→care-need, rule-based + Model Serving hook), `persistence/` (Delta store).
+  (symptom→care-need, rule-based + embeddings + Model Serving hook), `persistence/` (Delta store).
 - **frontend/** — React + Vite + Tailwind + shadcn/ui, installable PWA (MapLibre + OSM, no map key).
 
-## Local development
+## 💻 Local development
 
 ```bash
 # backend
@@ -63,7 +128,7 @@ Data access in local dev uses a PAT (SQL Statement Execution REST API); see the 
 and set env vars in a git-ignored `.env`. **In-platform the app uses the app's service principal (OAuth) — no
 PAT in code.**
 
-## Deploy
+## 🚀 Deploy
 
 Push to `main` → **GitHub Actions** builds the frontend and runs `databricks sync` + `databricks apps deploy`.
 
@@ -71,7 +136,7 @@ Required repo **Secrets** (Settings → Secrets and variables → Actions — ne
 
 | Secret | Example |
 |---|---|
-| `DATABRICKS_HOST` | `https://dbc-ad43c802-45af.cloud.databricks.com` |
+| `DATABRICKS_HOST` | `https://<your-workspace>.cloud.databricks.com` |
 | `DATABRICKS_TOKEN` | PAT of the deploy identity |
 | `DATABRICKS_APP_NAME` | `medsatya` |
 | `DATABRICKS_SOURCE_PATH` | `/Workspace/Users/<you>/medsatya-src` |
@@ -101,7 +166,7 @@ uvicorn backend.app:app --host 127.0.0.1 --port 8080
 All `/api` calls honour `VITE_API_BASE`, the router uses `import.meta.env.BASE_URL`, and the service
 worker + manifest are base-aware — so root-path deploys (Databricks Apps, Render, local dev) are unaffected.
 
-## Adding the data (for teammates)
+## 📦 Adding the data (for teammates)
 
 The app reads the **Virtue Foundation Dataset (DAIS 2026)** Marketplace listing
 (`19326b3d-db63-4627-abc0-cf4e8131a305`). In your Databricks workspace: **Marketplace → find the listing →
@@ -109,7 +174,7 @@ Get instant access** so `databricks_virtue_foundation_dataset_dais_2026.virtue_f
 appears in your Catalog. Do **not** copy/redistribute the files — that breaks lineage and the source
 "receipts". The app parametrizes `catalog.schema.table` via env, so no one's catalog name is hardcoded.
 
-## Honesty ethos (what the engine guarantees)
+## ⚖️ Honesty ethos (what the engine guarantees)
 
 - Evidence status per `(facility, care_need)`: `strongly_supported` / `partially_supported` / `claim_only` /
   `contradictory` / `not_enough_data` — from **cross-field corroboration** (a claim in `capability` checked
@@ -117,3 +182,14 @@ appears in your Catalog. Do **not** copy/redistribute the files — that breaks 
 - **Data desert** ("we don't know") is visually distinct from **medical desert** ("care probably absent").
 - Every status carries an **exact-span citation** + `source_urls`, plus a **call-before-travel checklist**
   built from exactly what the data does not confirm.
+
+---
+
+<div align="center">
+
+**Team AHOJ AI** · Hack-Nation × Databricks · Challenge #04 "Data Legend" · 18–19 July 2026
+· [MIT License](LICENSE)
+
+_Trust. Verify. Heal India._ 🩺
+
+</div>
