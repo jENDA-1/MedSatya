@@ -1,8 +1,8 @@
 name: Deploy MedSatya to Databricks Apps
 
 on:
-  push:
-    branches: [main]
+  # Manual-only. Auto-deploy on push is intentionally OFF: it needs the Databricks repo Secrets
+  # below, and the live Databricks App is deployed manually. Run via Actions → "Run workflow".
   workflow_dispatch: {}
 
 # Secrets (Settings → Secrets and variables → Actions):

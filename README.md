@@ -4,12 +4,9 @@
 
 ### _Trust. Verify. Heal India._
 
-[![Hack-Nation × Databricks](https://img.shields.io/badge/Hack--Nation%20%C3%97%20Databricks-Challenge%20%2304%20%C2%B7%20Data%20Legend-FF3621?style=for-the-badge&logo=databricks&logoColor=white)](https://www.databricks.com/)
-[![Hackathon 18–19 Jul 2026](https://img.shields.io/badge/Hackathon-18%E2%80%9319%20Jul%202026-6f42c1?style=for-the-badge)](#-hackathon--track)
-[![Team AHOJ AI](https://img.shields.io/badge/Team-AHOJ%20AI-0ea5e9?style=for-the-badge)](#-team--ahoj-ai)
+**Hack-Nation × Databricks · Challenge #04 "Data Legend" · 18–19 July 2026 · Team AHOJ AI**
 
-[![Live on Databricks Apps](https://img.shields.io/badge/▶%20Live-Databricks%20Apps-FF3621?style=for-the-badge&logo=databricks&logoColor=white)](https://medsatya-7474659229844250.aws.databricksapps.com)
-[![Public demo — no login](https://img.shields.io/badge/▶%20Public%20demo-no%20login-2ea44f?style=for-the-badge)](https://gridmind.taila69b70.ts.net/medsatyam/)
+**▶ [Live on Databricks Apps](https://medsatya-7474659229844250.aws.databricksapps.com) · [Public demo — no login](https://gridmind.taila69b70.ts.net/medsatyam/)**
 
 ![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
@@ -128,7 +125,9 @@ PAT in code.**
 
 ## 🚀 Deploy
 
-Push to `main` → **GitHub Actions** builds the frontend and runs `databricks sync` + `databricks apps deploy`.
+Run the **Deploy** workflow manually (**Actions → Deploy MedSatya to Databricks Apps → Run workflow**): it
+builds the frontend and runs `databricks sync` + `databricks apps deploy`. It's **manual-only** (so commits
+don't trigger deploys) and needs the repo **Secrets** below.
 
 Required repo **Secrets** (Settings → Secrets and variables → Actions — never commit these):
 
