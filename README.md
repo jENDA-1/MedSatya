@@ -15,6 +15,18 @@ Built for **Hack-Nation × Databricks, Challenge #04 "Data Legend"**. Runs live 
 
 ---
 
+## Live deployments
+
+MedSatya runs **live on two targets, both querying the same live Databricks warehouse**:
+
+| Target | URL | Access |
+|---|---|---|
+| **Databricks Apps** — canonical; one FastAPI process serves `/api/*` + the React PWA | https://medsatya-7474659229844250.aws.databricksapps.com | Databricks workspace SSO |
+| **Public demo** — for reviewers; static frontend + FastAPI reverse-proxied under a subpath | https://gridmind.taila69b70.ts.net/medsatyam/ | open, no login |
+
+Same Trust Engine, same live data — the public demo is a mirror so reviewers can try it without a Databricks
+login. See [Deploy → Public demo mirror](#public-demo-mirror) for how the subpath build works.
+
 ## Architecture
 
 ```
@@ -70,6 +82,20 @@ databricks apps get medsatya -o json
 ```
 
 Live: **https://medsatya-7474659229844250.aws.databricksapps.com**
+
+### Public demo mirror
+
+To also serve the app publicly under a subpath (e.g. `/medsatyam/` behind an Nginx reverse proxy), build the
+frontend for that base and reverse-proxy the API to the FastAPI backend — **same live Databricks data, no login**:
+
+```bash
+(cd frontend && VITE_API_BASE=/medsatyam npx vite build --base=/medsatyam/)   # → frontend/dist
+# upload frontend/dist to the static host; run the backend and proxy /<base>/api/ → 127.0.0.1:8080/api/
+uvicorn backend.app:app --host 127.0.0.1 --port 8080
+```
+
+All `/api` calls honour `VITE_API_BASE`, the router uses `import.meta.env.BASE_URL`, and the service
+worker + manifest are base-aware — so root-path deploys (Databricks Apps, Render, local dev) are unaffected.
 
 ## Adding the data (for teammates)
 
