@@ -21,8 +21,6 @@
 ![PWA](https://img.shields.io/badge/PWA-5A0FC8?logo=pwa&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow)
 
-<video src="https://github.com/jENDA-1/MedSatya/raw/main/docs/demo.mp4" controls width="360"></video>
-
 ▶ [Watch the brand animation](docs/demo.mp4) (6 s)
 
 </div>
@@ -66,16 +64,16 @@ without a Databricks login. See [Deploy → Public demo mirror](#public-demo-mir
 <table>
 <tr>
 <td align="center" width="25%">
-<a href="https://www.linkedin.com/in/jan-ullmann-5a167920b/"><img src="docs/team/jan-ullmann.jpg" width="110" alt="Jan Ullmann"/></a><br/>
-<b>Jan Ullmann</b><br/>
-<sub>Team lead · full-stack + data/AI</sub><br/>
-<a href="https://www.linkedin.com/in/jan-ullmann-5a167920b/"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?logo=linkedin&logoColor=white" alt="LinkedIn"/></a>
-</td>
-<td align="center" width="25%">
 <a href="https://www.linkedin.com/in/kalaluka-kwalombota-0211961ab/"><img src="docs/team/kalaluka-kwalombota.jpg" width="110" alt="Kalaluka Kwalombota"/></a><br/>
 <b>Kalaluka Kwalombota</b><br/>
-<sub>Data &amp; ML engineering</sub><br/>
+<sub>Team lead · Data &amp; ML engineering</sub><br/>
 <a href="https://www.linkedin.com/in/kalaluka-kwalombota-0211961ab/"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?logo=linkedin&logoColor=white" alt="LinkedIn"/></a>
+</td>
+<td align="center" width="25%">
+<a href="https://www.linkedin.com/in/jan-ullmann-5a167920b/"><img src="docs/team/jan-ullmann.jpg" width="110" alt="Jan Ullmann"/></a><br/>
+<b>Jan Ullmann</b><br/>
+<sub>Full-stack + data/AI engineering</sub><br/>
+<a href="https://www.linkedin.com/in/jan-ullmann-5a167920b/"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?logo=linkedin&logoColor=white" alt="LinkedIn"/></a>
 </td>
 <td align="center" width="25%">
 <a href="https://www.linkedin.com/in/jirizavorka/"><img src="docs/team/jiri-zavorka.jpg" width="110" alt="Jiří Závorka"/></a><br/>
