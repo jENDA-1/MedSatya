@@ -2,6 +2,10 @@
 
 **Trust. Verify. Heal India.**
 
+<video src="https://github.com/jENDA-1/MedSatya/raw/main/docs/demo.mp4" controls width="320"></video>
+
+▶ [Watch the brand animation](docs/demo.mp4) (6 s)
+
 MedSatya helps people in India find **trustworthy care**. For a given care need (ICU, NICU, …) near a
 location, it returns an **evidence-attached shortlist** of facilities — every claim shows its **source**
 ("receipt"), and the app is honest about what it does *not* know.
