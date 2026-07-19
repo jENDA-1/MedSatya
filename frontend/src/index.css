@@ -2,9 +2,75 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ------------------------------------------------------------------ */
+/* MedSatya design tokens — theme-aware via CSS custom properties.     */
+/* Brand colours (navy/satya/gold/warm) stay fixed in tailwind.config; */
+/* these vars drive theme-switchable surfaces + evidence colours so    */
+/* high-contrast + colourblind modes can override them at runtime.     */
+/* Values are raw "R G B" channels so Tailwind opacity modifiers work: */
+/* rgb(var(--ev-strong) / 0.1)  ==  bg-evidence-strong/10              */
+/* ------------------------------------------------------------------ */
 :root {
   color-scheme: light;
+
+  /* Surfaces (default "warm" theme) */
+  --bg: 245 243 237;          /* #F5F3ED warm */
+  --surface: 255 255 255;     /* card / panel */
+  --surface-2: 251 250 246;   /* subtle raised */
+  --ink: 7 27 79;             /* #071B4F navy text */
+  --ink-muted: 71 85 120;     /* muted navy */
+  --line: 214 218 230;        /* hairline border */
+  --ring: 0 99 75;            /* focus ring (satya) */
+  --radius: 1rem;
+
+  /* Evidence status palette (paired with icon + shape + text, never colour-only) */
+  --ev-strong: 0 99 75;       /* #00634B  strongly supported */
+  --ev-partial: 201 154 46;   /* #C99A2E  partially supported */
+  --ev-claim: 107 114 128;    /* #6B7280  claim only */
+  --ev-contra: 180 35 42;     /* #B4232A  contradictory */
+  --ev-unknown: 148 163 184;  /* #94A3B8  not enough data */
 }
+
+/* Colourblind-safe (Okabe–Ito): deuteran/protan/tritan distinguishable.
+   Shape + icon + text still carry the meaning; colour only reinforces. */
+:root[data-cvd="1"] {
+  --ev-strong: 0 158 115;     /* bluish green */
+  --ev-partial: 230 159 0;    /* orange */
+  --ev-claim: 120 120 120;    /* grey */
+  --ev-contra: 213 94 0;      /* vermillion */
+  --ev-unknown: 86 180 233;   /* sky blue */
+}
+
+/* High-contrast (WCAG AAA): black ink on white, darkened accents. */
+:root[data-theme="hc"] {
+  --bg: 255 255 255;
+  --surface: 255 255 255;
+  --surface-2: 255 255 255;
+  --ink: 0 0 0;
+  --ink-muted: 26 26 26;
+  --line: 0 0 0;
+  --ring: 0 0 0;
+
+  --ev-strong: 0 90 60;
+  --ev-partial: 122 92 0;     /* darker gold for AAA on white */
+  --ev-claim: 55 55 55;
+  --ev-contra: 155 20 20;
+  --ev-unknown: 40 70 110;
+}
+
+/* High-contrast + colourblind: keep Okabe–Ito hues but darkened for AAA. */
+:root[data-theme="hc"][data-cvd="1"] {
+  --ev-strong: 0 110 80;
+  --ev-partial: 150 100 0;
+  --ev-claim: 60 60 60;
+  --ev-contra: 175 75 0;
+  --ev-unknown: 20 90 150;
+}
+
+/* Font scaler — scales the whole rem-based UI from the root. */
+:root { font-size: 100%; }
+:root[data-font="lg"] { font-size: 112.5%; }   /* A+  */
+:root[data-font="xl"] { font-size: 125%; }      /* A++ */
 
 html,
 body,
@@ -14,7 +80,43 @@ body,
 
 body {
   margin: 0;
-  background: #f5f3ed;
-  color: #071b4f;
+  background: rgb(var(--bg));
+  color: rgb(var(--ink));
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden; /* belt-and-braces: never allow a stray element to scroll the page sideways */
+}
+
+/* Visible keyboard focus everywhere (respects theme ring colour). */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid rgb(var(--ring));
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Motion: honour the OS setting AND an explicit in-app toggle. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+:root[data-reduce-motion="1"] *,
+:root[data-reduce-motion="1"] *::before,
+:root[data-reduce-motion="1"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Screen-reader-only utility (used for aria-live regions, skip links). */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
 }

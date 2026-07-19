@@ -138,9 +138,18 @@ def assess(fac: dict, care_need: str) -> Evidence:
         claim_cites += _match_in_text(description, cfg["claim_keywords"], "description", "claim")
 
     # --- SUPPORT axes (cross-field corroboration)
+    # Honesty: a support axis must be INDEPENDENT of the claim. For care types whose claim keyword
+    # lives in `specialties` (e.g. maternity: "obstetric" ⊂ "gynecologyandobstetrics"), the SAME
+    # specialties item would otherwise satisfy both the claim and the specialty support axis —
+    # inflating one taxonomy tag into "claim + corroboration". So the specialty axis only counts
+    # specialties items that were NOT already consumed as the claim source. Items where the claim
+    # comes from `capability`/`description` (ICU/NICU) keep an independent specialty axis unchanged.
+    claim_spec_items = {c.text for c in claim_cites if c.field == "specialties"}
+    spec_pool = [s for s in specialties if s.strip()[:240] not in claim_spec_items]
+
     eq_cites = _match_in_array(equipment, cfg["equipment_keywords"], "equipment", "equipment")
     proc_cites = _match_in_array(procedure, cfg["procedure_keywords"], "procedure", "procedure")
-    spec_cites = _match_in_array(specialties, cfg["specialty_keywords"], "specialties", "specialty")
+    spec_cites = _match_in_array(spec_pool, cfg["specialty_keywords"], "specialties", "specialty")
 
     # --- CONTRADICTIONS (explicit denial in any narrative/claim field)
     contra: list[Citation] = []
@@ -156,26 +165,48 @@ def assess(fac: dict, care_need: str) -> Evidence:
     }
     n_support = sum(axes.values())
 
+    # --- Specificity gate (opt-in per care-need, honesty; Session-6).
+    # For a care type whose support fields are otherwise generic (trauma: surgery depts + ct/ot/blood
+    # bank — infrastructure ANY large hospital carries), reaching STRONGLY on two GENERIC axes over-
+    # credits a bare claim. `specific_support_keywords` names the discriminating signals (e.g. trauma
+    # bay / trauma surgery); STRONGLY then additionally requires at least one of them among the SUPPORT
+    # citations. Care types without the key keep `has_specific = True` → identical behavior (no
+    # regression to icu/nicu/…). Generic-only corroboration is demoted to PARTIALLY ("verify"), never
+    # dropped below — the citations are still emitted in full.
+    specific_kws = {k.lower() for k in cfg.get("specific_support_keywords", [])}
+    if specific_kws:
+        has_specific = any(
+            c.matched.lower() in specific_kws for c in (eq_cites + proc_cites + spec_cites)
+        )
+    else:
+        has_specific = True
+
     # --- Band assignment
     if contra:
         status = CONTRADICTORY
     elif not has_claim:
         status = NOT_ENOUGH
-    elif n_support >= 2:
+    elif n_support >= 2 and has_specific:
         status = STRONGLY
-    elif n_support == 1:
+    elif n_support >= 1:
         status = PARTIALLY
     else:
         status = CLAIM_ONLY
 
     # --- care_evidence (within-band ranking signal, 0..1)
+    # Count-weighted and granular so two facilities in the SAME band differ visibly (the previous
+    # all-or-nothing form saturated: nearly every STRONGLY landed on exactly 0.78). Depth of
+    # corroboration counts — more distinct equipment/procedure matches score higher — while the
+    # specialty axis (a taxonomy tag, the weakest signal) is weighted lowest and capped low. This
+    # only spreads ranking WITHIN a band; it never moves a facility across a status gate.
+    n_eq, n_proc, n_spec = len(eq_cites), len(proc_cites), len(spec_cites)
     care_evidence = round(
         min(
             1.0,
-            0.30 * (1.0 if has_claim else 0.0)
-            + 0.30 * (1.0 if axes["equipment"] else 0.0)
-            + 0.22 * (1.0 if axes["procedure"] else 0.0)
-            + 0.18 * (1.0 if axes["specialty"] else 0.0),
+            (0.20 if has_claim else 0.0)
+            + (min(0.34, 0.20 + 0.07 * n_eq) if n_eq else 0.0)
+            + (min(0.26, 0.14 + 0.06 * n_proc) if n_proc else 0.0)
+            + (min(0.14, 0.06 * n_spec) if n_spec else 0.0),
         ),
         3,
     )

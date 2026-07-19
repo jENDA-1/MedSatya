@@ -61,6 +61,25 @@ def location_confidence_score(coord_valid: bool) -> float:
 def rank_score(care_evidence: float, freshness: float, distance_access: float,
                location_confidence: float, human_verification: float = 0.0,
                community_adjustment: float = 0.0) -> float:
+    """Within-band rank score (0..100). The status band gates ranking (see BAND_ORDER); this score
+    only orders facilities *inside* a band and can NEVER promote one across a status gate — the core
+    honesty invariant (methodology §17).
+
+    Safe-learning hooks (present but INERT in this MVP — the engine is deterministic by design; cf.
+    docs/STATUS.md "Hooks only (NOT built): … RL bandit …" and the methodology's §9 "Safe
+    Reinforcement Learning" / §10 "Safe learning lifecycle"):
+      * ``human_verification`` (0..1) — a human-review / expert-verification signal.
+      * ``community_adjustment`` (±5) — an aggregate crowd/doctor correction.
+    Both default to ``0.0`` and are intentionally NOT passed at the only call site
+    (``build_shortlist`` below), so today the score is fully deterministic and reproducible.
+
+    They are the wired plug-in points for a FUTURE *safe constrained contextual bandit*, not built
+    here: the feedback already logged (write-only) by ``persistence/feedback.py`` (``/api/feedback``)
+    is the offline training set; a learned policy would supply ``human_verification`` /
+    ``community_adjustment`` at this call — trained offline → shadow-mode → limited rollout — and
+    stays SAFE because it is bounded to re-rank only WITHIN a band (never across an evidence gate),
+    with emergency care types kept purely deterministic (no exploration). Nothing learns online today.
+    """
     base = 100.0 * (
         0.50 * care_evidence
         + 0.20 * freshness

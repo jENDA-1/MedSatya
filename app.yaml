@@ -5,3 +5,11 @@ command:
   - sh
   - -c
   - uvicorn backend.app:app --host 0.0.0.0 --port ${DATABRICKS_APP_PORT:-8000}
+
+# Server-side secret for the OpenAI triage agent + realtime voice. `valueFrom` references the
+# app "secret" resource `openai-api-key` (scope `medsatya`, key `openai_api_key`) — the key is
+# NEVER in git or the frontend bundle; the app SP reads it in-platform. With the resource absent
+# the app still starts and degrades gracefully to the embeddings + deterministic clarify chain.
+env:
+  - name: OPENAI_API_KEY
+    valueFrom: openai-api-key

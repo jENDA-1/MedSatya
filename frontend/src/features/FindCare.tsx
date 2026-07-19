@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import {
   ApiError,
   getCareNeeds,
@@ -16,16 +16,28 @@ import {
 } from "@/lib/store";
 import CareNeedButtons from "@/components/CareNeedButtons";
 import SymptomBox from "@/components/SymptomBox";
-import FacilityCard from "@/components/FacilityCard";
-import MapView from "@/components/MapView";
-import LocationPicker from "@/components/LocationPicker";
 import Toast, { type ToastMessage } from "@/components/Toast";
+import Hero, { HeroTrustFooter } from "@/components/Hero";
+import { Button } from "@/components/ui/button";
+
+// Code-split everything that pulls in maplibre-gl (heavy) so the initial bundle stays lean:
+// the map picker (step 1, optional) and the results view (step 3) both load on demand.
+const ResultsView = lazy(() => import("@/components/ResultsView"));
+const LocationPicker = lazy(() => import("@/components/LocationPicker"));
 
 type Step = 1 | 2 | 3;
 
+/** Best-effort, honest label for a saved lat/lon: only names it when it's an
+ *  exact preset city match; otherwise says so plainly rather than guessing. */
+function describeSavedLocation(loc: LatLon): string {
+  const match = PRESET_CITIES.find(
+    (c) => Math.abs(c.lat - loc.lat) < 0.001 && Math.abs(c.lon - loc.lon) < 0.001,
+  );
+  return match ? match.name : "your saved location";
+}
+
 export default function FindCare() {
   const [step, setStep] = useState<Step>(1);
-  const [hydrated, setHydrated] = useState(false);
 
   const [location, setLocation] = useState<LatLon | null>(() => getLastLocation());
   const [locationLabel, setLocationLabel] = useState<string | null>(null);
@@ -38,14 +50,27 @@ export default function FindCare() {
   const [careNeed, setCareNeed] = useState<string | null>(() => getLastCareNeed());
   const [careNeedLabel, setCareNeedLabel] = useState<string | null>(null);
   const [isEmergency, setIsEmergency] = useState(false);
+  // The assistant's live suggestion, surfaced onto the care-type options below the chat.
+  const [agentSuggestion, setAgentSuggestion] = useState<
+    { careNeed: string; confidence: number; alternativeKeys: string[] } | null
+  >(null);
 
   const [shortlist, setShortlist] = useState<ShortlistResponse | null>(null);
   const [shortlistLoading, setShortlistLoading] = useState(false);
   const [shortlistError, setShortlistError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const notify = (text: string, kind: "success" | "error") => setToast({ text, kind });
+
+  // Snapshot of a prior visit's search, captured once at mount — powers the
+  // "Resume last search" chip on the hero. Does NOT drive the starting step;
+  // the app always starts on step 1 (see below).
+  const [resumeSnapshot] = useState<{ loc: LatLon; careNeedKey: string } | null>(() => {
+    const loc = getLastLocation();
+    const key = getLastCareNeed();
+    return loc && key ? { loc, careNeedKey: key } : null;
+  });
+  const [resumeDismissed, setResumeDismissed] = useState(false);
 
   // Load care needs once on mount.
   useEffect(() => {
@@ -68,18 +93,21 @@ export default function FindCare() {
     }
   }, [careNeedsData, careNeed]);
 
-  // Decide the starting step once on mount (graceful refresh/deep-link).
+  // On every step transition, jump back to the top so each step starts from its heading — after
+  // picking a location (or care type) the user lands at the top of the new step, never left
+  // mid-scroll where the previous step's CTA had scrolled them down.
   useEffect(() => {
-    if (hydrated) return;
-    if (location && careNeed) {
-      setStep(3);
-    } else if (location) {
-      setStep(2);
-    } else {
-      setStep(1);
-    }
-    setHydrated(true);
-  }, [hydrated, location, careNeed]);
+    window.scrollTo(0, 0);
+  }, [step]);
+
+  // NOTE: the app intentionally always starts on step 1 (the hero), even when
+  // a prior visit left a location + care need in localStorage — `step`'s
+  // initial value above already handles that. We deliberately do NOT run a
+  // mount effect that promotes `step` to 2/3 here: that used to cause a
+  // jarring auto-jump straight to the map on return visits. Returning users
+  // instead get the explicit, dismissible "Resume last search" chip (see
+  // `resumeSnapshot` above and its use in the render below) — a shortcut
+  // they choose, not one the app takes for them.
 
   // Fetch the shortlist whenever we're on step 3 with a location + care need.
   useEffect(() => {
@@ -121,6 +149,7 @@ export default function FindCare() {
     setLocationError(null);
     setLastLocation(loc);
     setShowMapPicker(false);
+    setAgentSuggestion(null); // fresh location → fresh assistant context
     setStep(2);
   }
 
@@ -154,12 +183,30 @@ export default function FindCare() {
     setStep(3);
   }
 
-  function handleMarkerClick(uniqueId: string) {
-    setSelectedId(uniqueId);
-    document
-      .getElementById(`facility-${uniqueId}`)
-      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  /** User-initiated shortcut for the "Resume last search" chip — jumps
+   *  straight to the map using the snapshot of the last saved search. */
+  function handleResumeLastSearch() {
+    if (!resumeSnapshot) return;
+    const { loc, careNeedKey } = resumeSnapshot;
+    setLocation(loc);
+    setCareNeed(careNeedKey);
+    const found = careNeedsData?.care_needs.find((n) => n.key === careNeedKey);
+    if (found) {
+      setCareNeedLabel(found.label);
+      setIsEmergency(found.emergency);
+    }
+    setStep(3);
   }
+
+  const resumeChip =
+    resumeSnapshot && !resumeDismissed
+      ? {
+          careNeedLabel: careNeedLabel ?? resumeSnapshot.careNeedKey,
+          locationLabel: describeSavedLocation(resumeSnapshot.loc),
+          onResume: handleResumeLastSearch,
+          onDismiss: () => setResumeDismissed(true),
+        }
+      : null;
 
   const stepLabels: Record<Step, string> = {
     1: "Where are you?",
@@ -168,9 +215,12 @@ export default function FindCare() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
+    <>
+      {step === 1 && <Hero resume={resumeChip} />}
+      {step !== 3 && (
+      <div id="care-flow" className="mx-auto max-w-2xl px-4 pt-4">
       {/* Progress indicator */}
-      <ol className="mb-4 flex items-center gap-2 text-xs font-semibold text-navy/50" aria-label="Progress">
+      <ol className="mb-4 flex items-center justify-center gap-2 text-xs font-semibold text-navy/50" aria-label="Progress">
         {([1, 2, 3] as Step[]).map((s) => (
           <li key={s} className="flex items-center gap-2">
             <span
@@ -189,7 +239,7 @@ export default function FindCare() {
           </li>
         ))}
       </ol>
-      <h1 className="text-xl font-bold text-navy">{stepLabels[step]}</h1>
+      <h1 className="text-center text-xl font-bold text-navy">{stepLabels[step]}</h1>
 
       {/* --- STEP 1 --- */}
       {step === 1 && (
@@ -209,8 +259,8 @@ export default function FindCare() {
           )}
 
           <div>
-            <p className="mb-2 text-sm font-semibold text-navy/70">Or pick a city</p>
-            <div className="flex flex-wrap gap-2">
+            <p className="mb-2 text-center text-sm font-semibold text-navy/70">Or pick a city</p>
+            <div className="flex flex-wrap justify-center gap-2">
               {PRESET_CITIES.map((city) => (
                 <button
                   key={city.name}
@@ -224,7 +274,7 @@ export default function FindCare() {
             </div>
           </div>
 
-          <div>
+          <div className="text-center">
             <button
               type="button"
               onClick={() => setShowMapPicker((v) => !v)}
@@ -235,10 +285,18 @@ export default function FindCare() {
             </button>
             {showMapPicker && (
               <div className="mt-2">
-                <LocationPicker
-                  initialCenter={{ lat: PRESET_CITIES[0].lat, lon: PRESET_CITIES[0].lon }}
-                  onConfirm={(loc) => chooseLocation(loc, "your chosen spot")}
-                />
+                <Suspense
+                  fallback={
+                    <div className="grid h-56 place-items-center rounded-2xl border border-line text-sm text-ink-muted">
+                      Loading map…
+                    </div>
+                  }
+                >
+                  <LocationPicker
+                    initialCenter={{ lat: PRESET_CITIES[0].lat, lon: PRESET_CITIES[0].lon }}
+                    onConfirm={(loc) => chooseLocation(loc, "your chosen spot")}
+                  />
+                </Suspense>
               </div>
             )}
           </div>
@@ -248,26 +306,40 @@ export default function FindCare() {
       {/* --- STEP 2 --- */}
       {step === 2 && (
         <section className="mt-4 space-y-4" aria-label="Choose care type">
-          <button
-            type="button"
-            onClick={() => setStep(1)}
-            className="text-sm font-semibold text-navy/60 underline"
-          >
-            ← Change location
-          </button>
-          {location && (
-            <p className="text-sm text-navy/60">
-              Searching near <strong>{locationLabel ?? "your saved location"}</strong>
-            </p>
-          )}
+          <div className="flex flex-col items-center gap-1 text-center">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="text-sm font-semibold text-navy/60 underline"
+            >
+              ← Change location
+            </button>
+            {location && (
+              <p className="text-sm text-navy/60">
+                Searching near <strong>{locationLabel ?? "your saved location"}</strong>
+              </p>
+            )}
+          </div>
+
+          {/* Assistant chat FIRST — describe it or speak; it suggests + highlights the option below. */}
+          <SymptomBox onConfirm={handleSymptomConfirm} onSuggestionChange={setAgentSuggestion} />
+
+          {/* Then the manual care-type options, which reflect the assistant's live suggestion. */}
+          <div className="flex items-center gap-3 pt-1">
+            <span className="h-px flex-1 bg-line" />
+            <span className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              Or pick a care type
+            </span>
+            <span className="h-px flex-1 bg-line" />
+          </div>
 
           {careNeedsError && (
-            <p role="alert" className="text-sm text-evidence-contradictory">
+            <p role="alert" className="text-center text-sm text-evidence-contradictory">
               {careNeedsError}
             </p>
           )}
           {!careNeedsData && !careNeedsError && (
-            <p className="text-sm text-navy/50">Loading care types…</p>
+            <p className="text-center text-sm text-navy/50">Loading care types…</p>
           )}
           {careNeedsData && (
             <CareNeedButtons
@@ -275,110 +347,70 @@ export default function FindCare() {
               mvp={careNeedsData.mvp}
               selected={careNeed}
               onSelect={handleSelectCareNeed}
+              suggestedKey={agentSuggestion?.careNeed ?? null}
+              suggestedConfidence={agentSuggestion?.confidence ?? null}
+              alternativeKeys={agentSuggestion?.alternativeKeys ?? []}
             />
           )}
-
-          <SymptomBox onConfirm={handleSymptomConfirm} />
         </section>
       )}
+      </div>
+      )}
 
-      {/* --- STEP 3 --- */}
+      {/* Trust story closes the landing — below the location flow so the action leads. */}
+      {step === 1 && <HeroTrustFooter />}
+
+      {/* --- STEP 3 — full-width map + Vaul results sheet --- */}
       {step === 3 && location && careNeed && (
-        <section className="mt-4 space-y-4" aria-label="Shortlist results">
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setStep(2)}
-              className="text-sm font-semibold text-navy/60 underline"
-            >
-              ← Change care type
-            </button>
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="text-sm font-semibold text-navy/60 underline"
-            >
-              Change location
-            </button>
-          </div>
-
-          {(isEmergency || shortlist?.is_emergency) && (
-            <p
-              role="alert"
-              className="rounded-xl border border-evidence-contradictory/40 bg-evidence-contradictory/10 px-4 py-3 text-sm font-semibold text-evidence-contradictory"
-            >
-              In an emergency, call your local emergency services immediately. The list below
-              does not replace emergency care.
-            </p>
-          )}
-
-          <h2 className="text-lg font-bold text-navy">
-            {shortlist?.care_need_label ?? careNeedLabel ?? careNeed}
-          </h2>
-
-          {shortlistLoading && <p className="text-sm text-navy/50">Searching nearby facilities…</p>}
-          {shortlistError && (
-            <p role="alert" className="text-sm text-evidence-contradictory">
-              {shortlistError}
-            </p>
-          )}
-
-          {shortlist && !shortlistLoading && (
-            <>
-              <div className="rounded-xl border border-navy/15 bg-white p-3 text-sm text-navy/80">
-                <p>
-                  Of <strong>{shortlist.area_summary.total}</strong> facilities that claim{" "}
-                  {shortlist.care_need_label} nearby,{" "}
-                  <strong>{shortlist.area_summary.claim_only}</strong> are unsupported claims
-                  {shortlist.area_summary.contradictory > 0 && (
-                    <>
-                      {" "}
-                      and <strong>{shortlist.area_summary.contradictory}</strong> have
-                      contradictory evidence
-                    </>
-                  )}{" "}
-                  — we show the evidence for each below.
-                </p>
-                <p className="mt-1 text-xs text-navy/50">
-                  {shortlist.area_summary.evidenced} evidenced ·{" "}
-                  {shortlist.area_summary.claim_only} claim-only ·{" "}
-                  {shortlist.area_summary.contradictory} contradictory ·{" "}
-                  {shortlist.area_summary.unknown} unknown
-                </p>
+        <div className="mx-auto max-w-6xl px-4 pt-4">
+          {shortlistError ? (
+            <div className="mx-auto max-w-2xl space-y-3">
+              <div className="flex flex-wrap gap-2">
+                <Button variant="subtle" size="sm" onClick={() => setStep(2)}>
+                  ← Change care type
+                </Button>
+                <Button variant="subtle" size="sm" onClick={() => setStep(1)}>
+                  Change location
+                </Button>
               </div>
-
-              {shortlist.results.length > 0 ? (
-                <MapView
-                  results={shortlist.results}
-                  userLocation={location}
-                  selectedId={selectedId}
-                  onMarkerClick={handleMarkerClick}
-                />
-              ) : (
-                <p className="rounded-xl border border-navy/15 bg-white p-4 text-sm text-navy/70">
-                  No facilities found nearby for this care type. Try a different location or
-                  care type.
-                </p>
-              )}
-
-              <div className="space-y-3">
-                {shortlist.results.map((r) => (
-                  <FacilityCard
-                    key={r.unique_id}
-                    result={r}
-                    careNeed={shortlist.care_need}
-                    careNeedLabel={shortlist.care_need_label}
-                    highlighted={r.unique_id === selectedId}
-                    onNotify={notify}
-                  />
-                ))}
-              </div>
-            </>
+              <p role="alert" className="text-sm text-evidence-contradictory">
+                {shortlistError}
+              </p>
+            </div>
+          ) : (
+            <Suspense
+              fallback={
+                <div className="grid h-[60vh] place-items-center text-sm text-ink-muted">
+                  Loading results…
+                </div>
+              }
+            >
+              <ResultsView
+                results={shortlist?.results ?? []}
+                userLocation={location}
+                careNeed={careNeed}
+                careNeedLabel={shortlist?.care_need_label ?? careNeedLabel ?? careNeed}
+                areaSummary={
+                  shortlist?.area_summary ?? {
+                    total: 0,
+                    evidenced: 0,
+                    claim_only: 0,
+                    contradictory: 0,
+                    unknown: 0,
+                  }
+                }
+                isEmergency={isEmergency || Boolean(shortlist?.is_emergency)}
+                loading={shortlistLoading}
+                onNotify={notify}
+                onChangeCareType={() => setStep(2)}
+                onChangeLocation={() => setStep(1)}
+              />
+            </Suspense>
           )}
-        </section>
+        </div>
       )}
 
       <Toast toast={toast} onDismiss={() => setToast(null)} />
-    </div>
+    </>
   );
 }

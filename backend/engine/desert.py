@@ -32,14 +32,19 @@ DESERT_META = {
 
 
 def classify(evidence: ev.Evidence) -> dict:
-    strong_care = evidence.status in (ev.STRONGLY, ev.PARTIALLY)
+    # Honesty: GREEN "Evidenced coverage" is reserved for STRONGLY supported — a claim corroborated
+    # by ≥2 independent fields. `partially_supported` means "not fully corroborated", so it is
+    # POTENTIAL (gold "verify by phone"), NOT green — otherwise the dominant partially band (55–80%
+    # of a real shortlist) paints ~70–93% of cards green while the amber trust meter beside it says
+    # "partial". Green only for the genuinely strong signal keeps the semafor honest.
     high_data = evidence.data_confidence >= DATA_CONF_THRESHOLD
 
-    if strong_care and high_data:
-        t = EVIDENCED
-    elif strong_care and not high_data:
+    if evidence.status == ev.STRONGLY:
+        t = EVIDENCED if high_data else POTENTIAL
+    elif evidence.status == ev.PARTIALLY:
+        # some evidence, but not fully corroborated -> always "verify", never green
         t = POTENTIAL
-    elif not strong_care and high_data:
+    elif high_data:
         # rich record but no care evidence -> likely a real gap (unless explicitly contradictory,
         # which is an even stronger negative signal but still "care not evidenced here")
         t = MEDICAL_DESERT

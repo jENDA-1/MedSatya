@@ -1,0 +1,15 @@
+# Keep the build context small + never ship secrets or local build junk into the image.
+.git
+.github
+.databricks
+.venv
+**/__pycache__
+.pytest_cache
+node_modules
+frontend/node_modules
+frontend/dist
+.env
+.env.*
+*.log
+docs
+tests

@@ -1,0 +1,29 @@
+# Render Blueprint — one public web service running the whole MedSatya app (Docker).
+# New > Blueprint > connect the GitHub repo > Render reads this file. Set the secret values in the
+# dashboard (sync:false => Render prompts you; they are NEVER stored in git).
+#
+# Data stays on Databricks: the backend queries the warehouse over HTTPS with these creds.
+services:
+  - type: web
+    name: medsatya
+    runtime: docker
+    plan: free            # free web service (spins down when idle, cold-starts on first hit)
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true      # redeploy on push to the connected branch
+    # Values are set in the Render dashboard (sync:false), NEVER in this file — this repo is public.
+    envVars:
+      - key: DATABRICKS_HOST          # your workspace URL, e.g. https://<workspace>.cloud.databricks.com
+        sync: false
+      - key: DATABRICKS_WAREHOUSE_ID  # your SQL warehouse id
+        sync: false
+      # --- Auth: use EITHER the Service Principal OAuth pair (recommended, least-privilege) ---
+      - key: DATABRICKS_CLIENT_ID     # the app Service Principal's client (application) id
+        sync: false
+      - key: DATABRICKS_CLIENT_SECRET # generated OAuth secret for that SP
+        sync: false
+      # --- ...OR a single PAT (quicker, broader privilege). Set ONE method, not both. ---
+      # - key: DATABRICKS_TOKEN
+      #   sync: false
+      - key: OPENAI_API_KEY           # optional — omit and AI degrades to rule-based
+        sync: false

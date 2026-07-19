@@ -1,9 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#071B4F"/>
-  <!-- Trust shield -->
-  <path d="M256 96 L392 148 V268 C392 350 330 402 256 430 C182 402 120 350 120 268 V148 Z"
-        fill="#00634B" stroke="#C99A2E" stroke-width="14" stroke-linejoin="round"/>
-  <!-- Verification checkmark -->
-  <path d="M196 262 L242 308 L330 210" fill="none" stroke="#F5F3ED" stroke-width="30"
-        stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- MedSatya app mark: navy shield + gold check + medical cross + Ashoka chakra + leaves -->
+  <rect width="512" height="512" rx="112" fill="#F5F3ED"/>
+  <g>
+    <!-- Ashoka chakra -->
+    <circle cx="256" cy="110" r="34" fill="none" stroke="#C99A2E" stroke-width="5"/>
+    <g stroke="#C99A2E" stroke-width="3.5" stroke-linecap="round">
+      <line x1="256" y1="110" x2="286" y2="110"/>
+      <line x1="256" y1="110" x2="282" y2="125"/>
+      <line x1="256" y1="110" x2="271" y2="136"/>
+      <line x1="256" y1="110" x2="256" y2="140"/>
+      <line x1="256" y1="110" x2="241" y2="136"/>
+      <line x1="256" y1="110" x2="230" y2="125"/>
+      <line x1="256" y1="110" x2="226" y2="110"/>
+      <line x1="256" y1="110" x2="230" y2="95"/>
+      <line x1="256" y1="110" x2="241" y2="84"/>
+      <line x1="256" y1="110" x2="256" y2="80"/>
+      <line x1="256" y1="110" x2="271" y2="84"/>
+      <line x1="256" y1="110" x2="282" y2="95"/>
+    </g>
+    <circle cx="256" cy="110" r="8" fill="#C99A2E"/>
+    <!-- Leaves flanking the shield base -->
+    <path d="M150 352 C116 364 104 398 118 428 C150 416 162 382 150 352 Z" fill="#1F7A44"/>
+    <path d="M362 352 C396 364 408 398 394 428 C362 416 350 382 362 352 Z" fill="#00634B"/>
+    <!-- Trust shield -->
+    <path d="M148 168 H364 V300 C364 372 318 414 256 442 C194 414 148 372 148 300 V168 Z"
+          fill="#FFFFFF" stroke="#071B4F" stroke-width="16" stroke-linejoin="round"/>
+    <!-- Medical cross -->
+    <rect x="238" y="236" width="36" height="112" rx="8" fill="#071B4F"/>
+    <rect x="200" y="274" width="112" height="36" rx="8" fill="#071B4F"/>
+    <!-- Verification checkmark -->
+    <path d="M222 296 L250 324 L326 240" fill="none" stroke="#C99A2E" stroke-width="26"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
 </svg>

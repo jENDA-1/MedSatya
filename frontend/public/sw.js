@@ -1,19 +1,22 @@
 /* MedSatya service worker — installable PWA + offline app shell.
  * Strategy:
  *   - navigation requests: network-first, fall back to cached index.html (offline app shell)
- *   - static assets (/assets, /icons, manifest, favicon): stale-while-revalidate
- *   - /api/*: passthrough (never cached here) — offline data is handled by localStorage in the app,
+ *   - static assets (assets, icons, manifest, favicon): stale-while-revalidate
+ *   - api/*: passthrough (never cached here) — offline data is handled by localStorage in the app,
  *     so we never risk showing stale API data as if it were live.
+ * Base-aware: all paths derive from the SW's own registration scope, so it works at the site root
+ * ("/") and under a subpath ("/medsatyam/") alike — nothing is hardcoded to the origin root.
  */
 const CACHE = "medsatya-v1";
+const BASE = new URL(self.registration.scope).pathname; // "/" or "/medsatyam/"
 const SHELL = [
-  "/",
-  "/index.html",
-  "/manifest.webmanifest",
-  "/favicon.png",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
-  "/icons/apple-touch-icon.png",
+  BASE,
+  BASE + "index.html",
+  BASE + "manifest.webmanifest",
+  BASE + "favicon.png",
+  BASE + "icons/icon-192.png",
+  BASE + "icons/icon-512.png",
+  BASE + "icons/apple-touch-icon.png",
 ];
 
 self.addEventListener("install", (event) => {
@@ -33,11 +36,11 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // let cross-origin (map tiles) go to network
-  if (url.pathname.startsWith("/api/")) return; // never SW-cache API responses
+  if (url.pathname.startsWith(BASE + "api/")) return; // never SW-cache API responses
 
   if (req.mode === "navigate") {
     event.respondWith(
-      fetch(req).catch(() => caches.match("/index.html").then((r) => r || caches.match("/")))
+      fetch(req).catch(() => caches.match(BASE + "index.html").then((r) => r || caches.match(BASE)))
     );
     return;
   }

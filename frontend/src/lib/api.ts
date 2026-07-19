@@ -1,5 +1,9 @@
 // MedSatya API client — typed fetch wrappers for the FastAPI backend.
 // All endpoints are served at the same origin under /api/*.
+//
+// API_BASE lets the app run under a subpath behind a reverse proxy (e.g. /medsatyam on gridmind).
+// Empty by default (same-origin /api/*), so Databricks App / Render / local dev are unaffected.
+export const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 export interface CareNeed {
   key: string;
@@ -141,6 +145,11 @@ export interface MapSymptomResponse {
   rationale: string;
   is_emergency: boolean;
   alternatives: MapSymptomAlternative[];
+  /** Layer-2 AI: one clarifying question when confidence is low (never a diagnosis). */
+  needs_clarification?: boolean;
+  clarifying_question?: string | null;
+  /** Which provider produced the mapping: "rule_based" | "embedding" | "model_serving". */
+  provider?: string;
 }
 
 export interface SavedFacilityRef {
@@ -190,7 +199,7 @@ class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
+  const res = await fetch(API_BASE + path, {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -233,11 +242,12 @@ export async function getShortlist(
 
 export async function mapSymptom(
   text: string,
-  locale = "en"
+  locale = "en",
+  clarifyAnswer?: string
 ): Promise<MapSymptomResponse> {
   return request<MapSymptomResponse>("/api/map-symptom", {
     method: "POST",
-    body: JSON.stringify({ text, locale }),
+    body: JSON.stringify({ text, locale, clarify_answer: clarifyAnswer ?? null }),
   });
 }
 
@@ -258,6 +268,116 @@ export async function deleteSaved(id: string): Promise<{ ok: boolean }> {
   return request<{ ok: boolean }>(`/api/saved/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
+}
+
+// --- Community feedback (doctors + patients) ------------------------------
+// Collected to a Delta table only; it does NOT change evidence live.
+
+export type FeedbackRole = "doctor" | "patient";
+
+export interface FeedbackPayload {
+  role: FeedbackRole;
+  facility_id: string | null;
+  facility_name: string | null;
+  care_need: string | null;
+  correct_note: string | null; // what the data gets right
+  incorrect_note: string | null; // what the data gets wrong
+  evidence_url: string | null;
+  contact: string | null;
+}
+
+export interface FeedbackResponse {
+  id: string;
+  created_at: string;
+  stored: boolean; // Delta write succeeded
+  email_sent: boolean; // email hook (false when the provider is not configured)
+}
+
+export async function submitFeedback(payload: FeedbackPayload): Promise<FeedbackResponse> {
+  return request<FeedbackResponse>("/api/feedback", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+// --- Conversational triage agent (OpenAI, /api/triage) --------------------
+// Stateless: the client sends the running transcript; the server holds no state. The agent NEVER
+// diagnoses — it either asks ONE clarifying question, suggests ONE care-need to confirm, or flags
+// an emergency. Falls back to the deterministic embeddings + clarify chain when OpenAI is off.
+
+export type ChatRole = "user" | "assistant";
+export interface ChatMessage {
+  role: ChatRole;
+  content: string;
+}
+
+export interface TriageAlternative {
+  key: string;
+  label: string;
+}
+
+export type TriageResponse =
+  | { type: "question"; question: string; is_emergency: boolean; provider?: string }
+  | {
+      type: "suggestion";
+      care_need: string;
+      care_need_label: string;
+      confidence: number;
+      rationale: string;
+      is_emergency: boolean;
+      alternatives: TriageAlternative[];
+      provider?: string;
+    }
+  | {
+      type: "emergency";
+      is_emergency: true;
+      message: string;
+      care_need: string;
+      care_need_label: string | null;
+      provider?: string;
+    };
+
+export async function runTriage(messages: ChatMessage[], locale = "en"): Promise<TriageResponse> {
+  return request<TriageResponse>("/api/triage", {
+    method: "POST",
+    body: JSON.stringify({ messages, locale }),
+  });
+}
+
+export interface CareCandidate {
+  key: string;
+  label: string;
+  score: number;
+}
+
+export async function getCareCandidates(text: string): Promise<{ candidates: CareCandidate[] }> {
+  return request<{ candidates: CareCandidate[] }>(
+    `/api/care-candidates?text=${encodeURIComponent(text)}`
+  );
+}
+
+// --- Voice: realtime session token + transcription fallback ---------------
+// The OpenAI API key never reaches the browser: the backend mints a short-lived ephemeral client
+// secret we use only to open the WebRTC connection (see lib/realtime.ts). Transcription is a
+// simpler turn-based fallback when realtime isn't usable.
+
+export interface RealtimeSession {
+  value: string; // ephemeral client secret (short-lived)
+  expires_at: number;
+  model: string;
+}
+
+export async function createRealtimeSession(): Promise<RealtimeSession> {
+  return request<RealtimeSession>("/api/realtime/session", { method: "POST" });
+}
+
+export async function transcribeAudio(blob: Blob): Promise<{ text: string }> {
+  const form = new FormData();
+  form.append("audio", blob, "audio.webm");
+  // Do NOT set Content-Type — the browser adds the multipart boundary itself.
+  const res = await fetch(API_BASE + "/api/transcribe", { method: "POST", body: form });
+  if (!res.ok) throw new ApiError(`Transcription failed (${res.status})`, res.status);
+  return (await res.json()) as { text: string };
 }
 
 export { ApiError };
